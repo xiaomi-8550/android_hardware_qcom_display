@@ -212,7 +212,7 @@ endif
 SOONG_CONFIG_NAMESPACES += qtidisplay
 
 # Soong Keys
-SOONG_CONFIG_qtidisplay := drmpp headless llvmsa gralloc4 displayconfig_enabled udfps default var1 var2 var3 sdmcore_has_is_display_hw_available_func
+SOONG_CONFIG_qtidisplay := drmpp headless llvmsa gralloc4 displayconfig_enabled udfps default var1 var2 var3 sdmcore_has_is_display_hw_available_func sdmcore_panel_dimension_extra_precision
 
 # Soong Values
 SOONG_CONFIG_qtidisplay_drmpp := true
@@ -226,6 +226,7 @@ SOONG_CONFIG_qtidisplay_var1 := false
 SOONG_CONFIG_qtidisplay_var2 := false
 SOONG_CONFIG_qtidisplay_var3 := false
 SOONG_CONFIG_qtidisplay_sdmcore_has_is_display_hw_available_func := true
+SOONG_CONFIG_qtidisplay_sdmcore_panel_dimension_extra_precision := false
 
 ifeq ($(call is-vendor-board-platform,QCOM),true)
     SOONG_CONFIG_qtidisplay_displayconfig_enabled := true
@@ -233,6 +234,10 @@ endif
 
 ifeq ($(TARGET_SDMCORE_HAS_IS_DISPLAY_HW_AVAILABLE_FUNC), false)
     SOONG_CONFIG_qtidisplay_sdmcore_has_is_display_hw_available_func := false
+endif
+
+ifeq ($(TARGET_PANEL_DIMENSION_HAS_EXTRA_PRECISION), true)
+    SOONG_CONFIG_qtidisplay_sdmcore_panel_dimension_extra_precision := true
 endif
 
 ifeq ($(TARGET_USES_FOD_ZPOS), true)
