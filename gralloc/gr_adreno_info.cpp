@@ -37,7 +37,7 @@
 #include <cutils/properties.h>
 #include <dlfcn.h>
 #include <mutex>
-#include <fstream>
+#include <unistd.h>
 
 #include "gr_adreno_info.h"
 #include "gr_utils.h"
@@ -71,8 +71,7 @@ AdrenoMemInfo::AdrenoMemInfo() {
     gfx_ubwc_disable_ = true;
   }
 
-  fstream fs(kgsl_path, fstream::in);
-  if (!fs.is_open()) {
+  if (access(kgsl_path, F_OK)) {
     return;
   }
 

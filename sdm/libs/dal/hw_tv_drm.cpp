@@ -29,7 +29,7 @@
 /*
 *  Changes from Qualcomm Innovation Center are provided under the following license:
 *
-*  Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+*  Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted (subject to the limitations in the
@@ -153,6 +153,7 @@ DisplayError HWTVDRM::SetDisplayAttributes(uint32_t index) {
     return kErrorNotSupported;
   }
 
+  seamless_mode_switch_ = false;
   current_mode_index_ = index;
   PopulateHWPanelInfo();
   UpdateMixerAttributes();
@@ -294,6 +295,7 @@ void HWTVDRM::PopulateHWPanelInfo() {
   hw_panel_info_.hdr_metadata_type_one = connector_info_.ext_hdr_prop.hdr_metadata_type_one;
   hw_panel_info_.hdr_eotf = connector_info_.ext_hdr_prop.hdr_eotf;
   hw_panel_info_.supported_colorspaces = connector_info_.supported_colorspaces;
+  hw_panel_info_.is_pluggable = true;
 
   // Convert the raw luminance values from driver to Candela per meter^2 unit.
   float max_luminance = FLOAT(connector_info_.ext_hdr_prop.hdr_max_luminance);

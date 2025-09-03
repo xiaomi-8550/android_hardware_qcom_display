@@ -71,10 +71,11 @@ case "$target" in
     #SOC ID for Kalama SG p is 601
     #SOC ID for Kalama APQ 536
     case "$soc_hwid" in
-       519|600|601|603|604|536)
+       519|600|601|603|604|536|668)
         #Set property for kalama
         #SOC ID for QCS Kalama is 603
         #SOC ID for QCM Kalama is 604
+        #SOC ID for QCS Kalama IoT Non-Pop is 668
         setprop vendor.display.enable_fb_scaling 0
         setprop vendor.display.target.version 4
         setprop vendor.gralloc.use_dma_buf_heaps 1
@@ -99,8 +100,9 @@ case "$target" in
     "crow")
     #SOC ID for Crow is 608
     #SOC ID for Crow 4g is 644
+    #SOC ID for Crow APQ is 687
     case "$soc_hwid" in
-       608|644)
+       608|644|687)
         #SOC ID for Crow is 608
         setprop vendor.display.enable_fb_scaling 0
         setprop vendor.display.target.version 5

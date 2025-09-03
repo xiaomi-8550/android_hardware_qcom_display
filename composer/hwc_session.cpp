@@ -454,18 +454,20 @@ void HWCSession::InitSupportedDisplaySlots() {
 
   // Init slots in accordance to h/w capability.
   uint32_t disp_count = UINT32(std::min(max_pluggable, HWCCallbacks::kNumPluggable));
-  hwc2_display_t base_id = qdutils::DISPLAY_EXTERNAL;
+  hwc2_display_t base_id = HWC_DISPLAY_EXTERNAL;
   map_info_pluggable_.resize(disp_count);
   for (auto &map_info : map_info_pluggable_) {
     map_info.client_id = base_id++;
   }
 
+  base_id = HWC_DISPLAY_BUILTIN_2;
   disp_count = UINT32(std::min(max_builtin, HWCCallbacks::kNumBuiltIn));
   map_info_builtin_.resize(disp_count);
   for (auto &map_info : map_info_builtin_) {
     map_info.client_id = base_id++;
   }
 
+  base_id = HWC_DISPLAY_VIRTUAL;
   disp_count = UINT32(std::min(max_virtual, HWCCallbacks::kNumVirtual));
   map_info_virtual_.resize(disp_count);
   for (auto &map_info : map_info_virtual_) {
@@ -860,7 +862,6 @@ int32_t HWCSession::PresentDisplay(hwc2_display_t display, shared_ptr<Fence> *ou
     if (pending_power_mode_[display]) {
       status = HWC2::Error::None;
     } else {
-      hwc_display_[display]->ProcessActiveConfigChange();
       status = hwc_display_[display]->Present(out_retire_fence);
       if (status == HWC2::Error::None) {
         PostCommitLocked(display, *out_retire_fence);

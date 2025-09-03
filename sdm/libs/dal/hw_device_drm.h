@@ -29,7 +29,7 @@
 
 /* Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -335,6 +335,7 @@ class HWDeviceDRM : public HWInterface {
   static std::mutex cwb_state_lock_;  // cwb state lock. Set before accesing or updating cwb_config_
   uint32_t transfer_time_updated_ = 0;
   bool force_tonemapping_ = false;
+  bool seamless_mode_switch_ = false;
 
  private:
   void GetCWBCapabilities();
@@ -343,7 +344,6 @@ class HWDeviceDRM : public HWInterface {
   bool resolution_switch_enabled_ = false;
   bool autorefresh_ = false;
   std::unique_ptr<HWColorManagerDrm> hw_color_mgr_ = {};
-  bool seamless_mode_switch_ = false;
   float aspect_ratio_threshold_ = 1.0;
 };
 

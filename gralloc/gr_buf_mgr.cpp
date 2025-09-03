@@ -18,7 +18,7 @@
  */
 /*
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 
@@ -503,6 +503,7 @@ Error BufferManager::LockBuffer(const private_handle_t *hnd, uint64_t usage) {
     handle->flags |= qtigralloc::PRIV_FLAGS_NEEDS_FLUSH;
   }
 
+  buf->lock_count++;
   return err;
 }
 
@@ -512,7 +513,8 @@ Error BufferManager::FlushBuffer(const private_handle_t *handle) {
 
   private_handle_t *hnd = const_cast<private_handle_t *>(handle);
   auto buf = GetBufferFromHandleLocked(hnd);
-  if (buf == nullptr) {
+  if (buf == nullptr || buf->lock_count <= 0) {
+    ALOGW("%s: A bad or an unlocked buffer.", __FUNCTION__);
     return Error::BAD_BUFFER;
   }
 
@@ -530,7 +532,7 @@ Error BufferManager::RereadBuffer(const private_handle_t *handle) {
 
   private_handle_t *hnd = const_cast<private_handle_t *>(handle);
   auto buf = GetBufferFromHandleLocked(hnd);
-  if (buf == nullptr) {
+  if (buf == nullptr || buf->lock_count <= 0) {
     return Error::BAD_BUFFER;
   }
 
@@ -548,22 +550,28 @@ Error BufferManager::UnlockBuffer(const private_handle_t *handle) {
 
   private_handle_t *hnd = const_cast<private_handle_t *>(handle);
   auto buf = GetBufferFromHandleLocked(hnd);
-  if (buf == nullptr) {
+  if (buf == nullptr || buf->lock_count <= 0) {
+    ALOGW("%s: A bad or an already unlocked buffer.", __FUNCTION__);
     return Error::BAD_BUFFER;
   }
 
-  if (hnd->flags & qtigralloc::PRIV_FLAGS_NEEDS_FLUSH) {
-    if (allocator_->CleanBuffer(reinterpret_cast<void *>(hnd->base), hnd->size, hnd->offset,
-                                buf->ion_handle_main, CACHE_CLEAN, hnd->fd) != 0) {
-      status = Error::BAD_BUFFER;
-    }
-    hnd->flags &= ~qtigralloc::PRIV_FLAGS_NEEDS_FLUSH;
-  } else {
-    if (allocator_->CleanBuffer(reinterpret_cast<void *>(hnd->base), hnd->size, hnd->offset,
-                                buf->ion_handle_main, CACHE_READ_DONE, hnd->fd) != 0) {
-      status = Error::BAD_BUFFER;
+  // Avoid unlocking early for nested lock case
+  if (buf->lock_count == 1) {
+    if (hnd->flags & qtigralloc::PRIV_FLAGS_NEEDS_FLUSH) {
+      if (allocator_->CleanBuffer(reinterpret_cast<void *>(hnd->base), hnd->size, hnd->offset,
+                                  buf->ion_handle_main, CACHE_CLEAN, hnd->fd) != 0) {
+        status = Error::BAD_BUFFER;
+      }
+      hnd->flags &= ~qtigralloc::PRIV_FLAGS_NEEDS_FLUSH;
+    } else {
+      if (allocator_->CleanBuffer(reinterpret_cast<void *>(hnd->base), hnd->size, hnd->offset,
+                                  buf->ion_handle_main, CACHE_READ_DONE, hnd->fd) != 0) {
+        status = Error::BAD_BUFFER;
+      }
     }
   }
+
+  buf->lock_count = (status == Error::NONE) ? buf->lock_count - 1 : buf->lock_count;
 
   return status;
 }
@@ -602,8 +610,15 @@ Error BufferManager::AllocateBuffer(const BufferDescriptor &descriptor, buffer_h
     return Error::BAD_BUFFER;
   std::lock_guard<std::mutex> buffer_lock(buffer_lock_);
 
+  uint64_t reserved_size = descriptor.GetReservedSize();
   uint64_t usage = descriptor.GetUsage();
   int format = GetImplDefinedFormat(usage, descriptor.GetFormat());
+  uint64_t custom_content_md_reserved_size = GetCustomContentMetadataSize(format, usage);
+  if (reserved_size + sizeof(MetaData_t) + getpagesize() + custom_content_md_reserved_size >=
+      UINT32_MAX) {
+    return Error::UNSUPPORTED;
+  }
+
   uint32_t layer_count = descriptor.GetLayerCount();
 
   unsigned int size;
@@ -652,7 +667,6 @@ Error BufferManager::AllocateBuffer(const BufferDescriptor &descriptor, buffer_h
 
   // Allocate memory for MetaData
   AllocData e_data;
-  uint64_t custom_content_md_reserved_size = GetCustomContentMetadataSize(format, usage);
   e_data.size = static_cast<unsigned int>(GetMetaDataSize(descriptor.GetReservedSize(),
                                                           custom_content_md_reserved_size));
   e_data.handle = data.handle;
