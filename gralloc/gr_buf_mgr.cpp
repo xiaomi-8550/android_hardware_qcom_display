@@ -16,11 +16,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 /*
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ *
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
-*/
+ */
 
 #include "gr_buf_mgr.h"
 
@@ -126,6 +128,9 @@ static Error dataspaceToColorMetadata(Dataspace dataspace, ColorMetaData *color_
     case (uint32_t)Dataspace::TRANSFER_HLG:
       out.transfer = Transfer_HLG;
       break;
+    case (uint32_t)Dataspace::TRANSFER_ST2084:
+      out.transfer = Transfer_SMPTE_ST2084;
+      break;
     default:
       return Error::UNSUPPORTED;
       /*
@@ -137,7 +142,6 @@ static Error dataspaceToColorMetadata(Dataspace dataspace, ColorMetaData *color_
       Transfer_sYCC
       Transfer_BT2020_2_1
       Transfer_BT2020_2_2
-      Transfer_SMPTE_ST2084
       Transfer_ST_428
       */
   }

@@ -195,10 +195,15 @@ void HWVirtualDRM::ConfigureDNSC(HWLayersInfo *hw_layers_info) {
 DisplayError HWVirtualDRM::Commit(HWLayersInfo *hw_layers_info) {
   std::shared_ptr<LayerBuffer> output_buffer = hw_layers_info->output_buffer;
   DisplayError err = kErrorNone;
+  bool fb_modified = false;
 
   registry_.Register(hw_layers_info);
-  registry_.MapOutputBufferToFbId(output_buffer);
+  registry_.MapOutputBufferToFbId(output_buffer, &fb_modified);
   uint32_t fb_id = registry_.GetOutputFbId(output_buffer->handle_id);
+
+  if (fb_modified) {
+    hw_layers_info->updates_mask.set(kUpdateFBObject);
+  }
 
   ConfigureWbConnectorFbId(fb_id);
   ConfigureWbConnectorSecureMode(output_buffer->flags.secure);
@@ -230,9 +235,14 @@ DisplayError HWVirtualDRM::Flush(HWLayersInfo *hw_layers_info) {
 
 DisplayError HWVirtualDRM::Validate(HWLayersInfo *hw_layers_info) {
   std::shared_ptr<LayerBuffer> output_buffer = hw_layers_info->output_buffer;
+  bool fb_modified = false;
 
-  registry_.MapOutputBufferToFbId(output_buffer);
+  registry_.MapOutputBufferToFbId(output_buffer, &fb_modified);
   uint32_t fb_id = registry_.GetOutputFbId(output_buffer->handle_id);
+
+  if (fb_modified) {
+    hw_layers_info->updates_mask.set(kUpdateFBObject);
+  }
 
   ConfigureWbConnectorFbId(fb_id);
   ConfigureWbConnectorDestRect();
